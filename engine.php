@@ -1,5 +1,16 @@
 <?php
 
+function checked($var){
+    if(!isset($GLOBALS[$var]))
+        return false;
+
+    return $GLOBALS[$var];
+}
+
+if(!checked('phpRewriteInstalled') && file_exists('../index.php') && !file_exists('../.htaccess')){
+    copy('.htaccess', '../.htaccess');
+}
+
 class EngineClass {
     public $path;
     public $paths;
@@ -9,8 +20,8 @@ class EngineClass {
     function __constructor(){
         $this->path = $_SERVER['REQUEST_URI'];
 
-        $this->paths = explode('/', $path);
-        $this->cPaths = count($paths);
+        $this->paths = explode('/', $this->path);
+        $this->cPaths = count($this->paths);
         $this->pathPos = 1;
     }
 
