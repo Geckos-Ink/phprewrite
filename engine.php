@@ -59,7 +59,7 @@ class EngineClass {
         }
     
         if($autoIncrement)
-            nextPath($cp);
+            $this->nextPath($cp);
     
         return true;
     }
@@ -70,15 +70,21 @@ class EngineClass {
         if(!$this->check($pp))
             return false;
     
-        switch(gettype($to)){
-            case 'string':
-                if(str_ends_with($to, '.php')){
-                    include($to);
-                    return true;
-                }
-                break;
+        if(is_callable($to)){
+            $to();
+        }
+        else {
+            switch(gettype($to)){
+                case 'string':
+                    if(str_ends_with($to, '.php')){
+                        include($to);
+                        return true;
+                    }
+                    break;
+            }
         }
     }
+
     function getMimeType($filename) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mime = finfo_file($finfo, $filename);
@@ -102,7 +108,7 @@ class EngineClass {
         if($url==-1){
             $pp = explode('/',$path);
             $cpp = count($pp);
-            if($cpp>0)
+            if($cpp>0) 
                 $url = $pp[$cpp-1];
         }
     
@@ -113,7 +119,7 @@ class EngineClass {
                     return false;
             }
     
-            justServeFile($path);
+            $this->justServeFile($path);
             return true;
         }
     
