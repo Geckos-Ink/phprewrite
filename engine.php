@@ -1,5 +1,19 @@
 <?php
 
+// Utility functions
+function startsWith( $haystack, $needle ) {
+    $length = strlen( $needle );
+    return substr( $haystack, 0, $length ) === $needle;
+}
+
+function endsWith( $haystack, $needle ) {
+    $length = strlen( $needle );
+    if( !$length ) {
+        return true;
+    }
+    return substr( $haystack, -$length ) === $needle;
+}
+
 function checked($var){
     if(!isset($GLOBALS[$var]))
         return false;
@@ -17,12 +31,25 @@ class EngineClass {
     public $cPaths;
     public $pathPos;
 
-    function __constructor(){
-        $this->path = $_SERVER['REQUEST_URI'];
+    function __construct(){
+        $this->baseUrl = '/'; 
+        $this->_constructPath();
+    }
+
+    function _constructPath(){
+        $this->path = substr($_SERVER['REQUEST_URI'], strlen($this->baseUrl));
+
+        if(endsWith($this->path, '/'))
+            $this->path = substr($this->path, 0, strlen($this->path)-1);
 
         $this->paths = explode('/', $this->path);
         $this->cPaths = count($this->paths);
         $this->pathPos = 1;
+    }
+
+    function setBaseUrl($baseUrl){
+        $this->baseUrl = $baseUrl;
+        $this->_constructPath();
     }
 
     function getCurPath(){
@@ -41,18 +68,23 @@ class EngineClass {
     
         $cp = count($path);
     
-        if($cp>$this->cPaths+$this->pathPos)
-            return false;
-    
+        $ignoreFirst = false;
         $basePos = $this->pathPos;
-        for($i=0; $i+$basePos<$this->cPaths && $i < $cp; $i++){
+
+        if($path[0]==''){
+            $cp-=1; // be elastic for route/
+            $ignoreFirst = true;
+        }
+
+        if ($cp > $this->cPaths-$basePos || $cp < 1)
+            return false;  
+
+
+        for($i=($ignoreFirst?1:0); $i+$basePos<$this->cPaths && $i < $cp; $i++){            
             $ib = $i+$basePos;
+            $pv = $path[$i];    
     
-            $pv = $path[$i];
-    
-            if($pv == '')
-                break;       
-    
+            echo "check $pv vs ".$this->paths[$ib];
             if($pv != $this->paths[$ib]){
                 return false;
             }
@@ -60,7 +92,7 @@ class EngineClass {
     
         if($autoIncrement)
             $this->nextPath($cp);
-    
+
         return true;
     }
     
@@ -112,9 +144,10 @@ class EngineClass {
                 $url = $pp[$cpp-1];
         }
     
-        if($this->check($url, false)){    
+        if($this->check($url, false)){   
+     
             for($i=$this->pathPos; $i<$this->cPaths;$i++){
-                $path .= '/'.$GLOBALS['paths'][$i];
+                $path .= '/'.$this->paths[$i];
                 if(!file_exists($path))
                     return false;
             }
